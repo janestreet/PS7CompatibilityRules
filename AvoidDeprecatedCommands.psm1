@@ -1,22 +1,24 @@
-<#
+using namespace Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic
+using namespace System.Management.Automation.Language
+function AvoidDeprecatedCommands {
+    <#
     .SYNOPSIS
         Flag commands that were deemed incompatible with PS7
     .DESCRIPTION
         Find and flag commands that are listed on Microsoft's website as incompatible with PS7. The full list is in
         https://learn.microsoft.com/en-us/powershell/scripting/whats-new/differences-from-windows-powershell?view=powershell-7.4
     .INPUTS
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
     .OUTPUTS
-        [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-#>
-function AvoidDeprecatedCommands {
+        [DiagnosticRecord[]]
+    #>
     [CmdletBinding()]
-    [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+    [OutputType([DiagnosticRecord[]])]
     param (
         # Generic script block we are using to run our predicate against.
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
         $ScriptBlockAst
     )
     # This list does not include aliases, add them if necessary e.g. 'gwmi' = @{'*' = '*'}
@@ -37,6 +39,7 @@ function AvoidDeprecatedCommands {
         'Invoke-WmiMethod'                = @{'*' = '*'}
         'Register-WmiEvent'               = @{'*' = '*'}
         'Set-WmiInstance'                 = @{'*' = '*'}
+        'gwmi'                            = @{'*' = '*'}
         # https://learn.microsoft.com/en-us/powershell/scripting/whats-new/differences-from-windows-powershell?view=powershell-7.4#new-webserviceproxy-cmdlet-removed
         'New-WebServiceProxy'             = @{'*' = '*'}
 
@@ -62,7 +65,8 @@ function AvoidDeprecatedCommands {
         'Resume-Job'                      = @{'*' = '*'}
         'Suspend-Job'                     = @{'*' = '*'}
         # From Microsoft.PowerShell.Diagnostics
-        '*-Counter'                       = @{'*' = '*'}
+        'Export-Counter'                  = @{'*' = '*'}
+        'Import-Counter'                  = @{'*' = '*'}
         # From Microsoft.PowerShell.Management
         '*-ComputerRestore'               = @{'*' = '*'}
         'Test-ComputerSecureChannel'      = @{'*' = '*'}
@@ -100,10 +104,10 @@ function AvoidDeprecatedCommands {
     $commandDenyList += $commandDenyListPS7
     [scriptblock]$incompatibleCommandPredicate = {
         param (
-            [System.Management.Automation.Language.Ast]
+            [Ast]
             $Ast
         )
-        if ($Ast -is [System.Management.Automation.Language.CommandAst]) {
+        if ($Ast -is [CommandAst]) {
             $isViolation = $false
             $commandDenyList.Keys | where {$Ast.CommandElements[0] -like $_} | foreach {
                 $incompatibleCommand = $commandDenyList[$_]
@@ -141,13 +145,14 @@ function AvoidDeprecatedCommands {
 
     $violations = $ScriptBlockAst.FindAll($incompatibleCommandPredicate, $false)
     foreach ($violation in $violations) {
-        [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord] @{
-            Message  = ("The command $($Violation.CommandElements[0].Extent.Text) or one of its parameters or" +
-                       ' parameter values is not compatible with both PS5 and PS7. Consider using a different' +
-                       ' command.')
-            Extent   = $violation.Extent
-            RuleName = $MyInvocation.MyCommand
-            Severity = 'Error'
-        }
+            [DiagnosticRecord] @{
+                Message           = ("The command $($Violation.CommandElements[0].Extent.Text) or one of its " +
+                                    'parameters or parameter values is not compatible with both PS5 and PS7. ' +
+                                    'Consider using a different command.')
+                Extent            = $violation.Extent
+                RuleName          = $MyInvocation.MyCommand
+                Severity          = 'Error'
+                RuleSuppressionID = $violation.ToString()
+            }
     }
 }

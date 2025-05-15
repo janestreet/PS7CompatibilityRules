@@ -1,19 +1,21 @@
-<#
+using namespace Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic
+using namespace System.Management.Automation.Language
+function CommandRecommendations {
+    <#
     .SYNOPSIS
         Rrecommendations for specific commands that have different behavior in PS7
     .INPUTS
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
     .OUTPUTS
-        [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-#>
-function CommandRecommendations {
+        [DiagnosticRecord[]]
+    #>
     [CmdletBinding()]
-    [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+    [OutputType([DiagnosticRecord[]])]
     param (
         # Generic script block we are using to run our predicate against.
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
         $ScriptBlockAst
     )
 
@@ -57,10 +59,10 @@ function CommandRecommendations {
     $commandAstPredicate = {
         param (
             # Generic AST type to be converted.
-            [System.Management.Automation.Language.Ast]
+            [Ast]
             $Ast
         )
-        if ($Ast -is [System.Management.Automation.Language.CommandAst]) {
+        if ($Ast -is [CommandAst]) {
             $maybeEP = $Ast.CommandElements[0].Extent.Text
             if ($commandsRecommendations[$maybeEP] -and $maybeEP -notin $overlappingExternalCommands) {
                 if ($commandsRecommendations[$maybeEP].CustomExclusionCondition) {
@@ -84,11 +86,12 @@ function CommandRecommendations {
 
     foreach ($violation in $violations) {
         $recommendation = $commandsRecommendations[$violation.CommandElements[0].ToString()].Message
-        [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-            Message  = "Recommendation: $recommendation"
-            Extent   = $violation.Extent
-            RuleName = $MyInvocation.MyCommand
-            Severity = 'Info'
+        [DiagnosticRecord]@{
+            Message           = "Recommendation: $recommendation"
+            Extent            = $violation.Extent
+            RuleName          = $MyInvocation.MyCommand
+            Severity          = 'Info'
+            RuleSuppressionID = $violation.CommandElements[0].ToString()
         }
     }
 }

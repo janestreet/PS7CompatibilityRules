@@ -4,7 +4,7 @@ potential PowerShell 7 compatibility issues when migrating from PowerShell 5.1
 # Usage
 ```powershell
 git clone https://github.com/janestreet/PS7CompatibilityRules.git
-Invoke-ScriptAnalyzer -Path '<your_code_path>' -Recurse -CustomRulePath .\PS7CompatibilityRules\*
+Invoke-ScriptAnalyzer -Path '<your_code_path>' -Recurse -CustomRulePath .\PS7CompatibilityRules\*.psm1
 ```
 
 > [!NOTE]
@@ -38,7 +38,7 @@ Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version | Fo
 
 Rules will report these findings:
 ```shell
-> Invoke-ScriptAnalyzer -Path .\Demo.ps1 -CustomRulePath .\PS7CompatibilityRules\*
+> Invoke-ScriptAnalyzer -Path .\Demo.ps1 -CustomRulePath .\PS7CompatibilityRules\*.psm1
 
 RuleName                            Severity     ScriptName Line  Message
 --------                            --------     ---------- ----  -------
@@ -48,7 +48,7 @@ AvoidDeprecatedCommands             Error        Demo.ps1   9     The command Ge
 AvoidDeprecatedTypes                Error        Demo.ps1   1     Violation: Use System.Net.Http.HttpClient &
                                                                   System.Net.Http.HttpClientHandler to ensure compatibility
                                                                   with PS7 and future versions
-PS7NoGetSetAccessControl            Error        Demo.ps1   7     In PS7, GetAccessControl and SetAccessControl are not
+AvoidGetSetAccessControl            Error        Demo.ps1   7     In PS7, GetAccessControl and SetAccessControl are not
                                                                   available. Please use Get-Acl and Set-Acl
 CommandRecommendations              Information  Demo.ps1   2     Recommendation: Default encoding for "Out-File" has changed
                                                                   from unicode to UTF-8NoBOM. Specify "-Encoding Unicode" to

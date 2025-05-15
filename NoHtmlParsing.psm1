@@ -1,12 +1,14 @@
-<#
+using namespace Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic
+using namespace System.Management.Automation.Language
+function NoHtmlParsing {
+    <#
     .SYNOPSIS
         Flag code that relies on HTML parsing done in web cmdlets
     .INPUTS
         [System.Management.Automation.Language.ScriptBlockAst]
     .OUTPUTS
         [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-#>
-function NoHtmlParsing {
+    #>
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
     param (

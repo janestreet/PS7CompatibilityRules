@@ -1,41 +1,42 @@
-<#
+using namespace Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic
+using namespace System.Management.Automation.Language
+function AvoidGetSetAccessControl {
+    <#
     .SYNOPSIS
-         Generates errors for GetAccessControl() or SetAccessControl() calls
-    .DESCRIPTION
-    
+        Generates errors for GetAccessControl() or SetAccessControl() calls
     .INPUTS
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
     .OUTPUTS
-        [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
-#>
-function PS7NoGetSetAccessControl {
+        [DiagnosticRecord[]]
+    #>
     [CmdletBinding()]
-    [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
+    [OutputType([DiagnosticRecord[]])]
     param (
         # Generic script block we are using to run our predicate against.
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.Language.ScriptBlockAst]
+        [ScriptBlockAst]
         $ScriptBlockAst
     )
 
     $accessControlMethodsPredicate = {
         param (
-            [System.Management.Automation.Language.Ast]
+            [Ast]
             $Ast
         )
-        $Ast -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and
+        $Ast -is [InvokeMemberExpressionAst] -and
             $Ast.Member.ToString() -match '(Set|Get)AccessControl'
     }
     $violations = $ScriptBlockAst.FindAll($accessControlMethodsPredicate, $false)
 
     foreach ($violation in $violations) {
-        [Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-            Message  = ('In PS7, GetAccessControl and SetAccessControl are not available. Please use Get-Acl and' +
-                       ' Set-Acl')
-            Extent   = $violation.Extent
-            RuleName = $MyInvocation.MyCommand
-            Severity = 'Error'
+        [DiagnosticRecord]@{
+            Message           = ("In PS7, the $($violation.Member.ToString()) method is not available. Please " +
+                                'use Get-Acl and Set-Acl')
+            Extent            = $violation.Extent
+            RuleName          = $MyInvocation.MyCommand
+            Severity          = 'Error'
+            RuleSuppressionID = $violation.Member.ToString()
         }
     }
 }
