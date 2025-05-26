@@ -20,6 +20,7 @@ Invoke-ScriptAnalyzer -Path '<your_code_path>' -Recurse -CustomRulePath .\PS7Com
 | CommandRecommendations          | Recommendations for specific commands that have different behavior in PS7                           |
 | NoHtmlParsing                   | Flag code that relies on HTML parsing done in web cmdlets                                           |
 | SelectObjectMustSpecifyProperty | Select-Object ExcludeProperty is effective only when the command also includes a Property parameter |
+| EnsureProperUseOfDotNetMethods  | Flag some .NET method calls that have different behavior in PS7/.NET Core                           |
 
 
 # Example
@@ -34,6 +35,8 @@ $acl.AddAccessRule($rule)
 $acl.SetAccessControl("C:\temp\example.txt")
 
 Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version | Format-Table -AutoSize
+
+'One,Two;Three Four'.Split(' ,;') | foreach { "Processing: $_" }
 ```
 
 Rules will report these findings:
@@ -53,6 +56,9 @@ AvoidGetSetAccessControl            Error        Demo.ps1   7     In PS7, GetAcc
 CommandRecommendations              Information  Demo.ps1   2     Recommendation: Default encoding for "Out-File" has changed
                                                                   from unicode to UTF-8NoBOM. Specify "-Encoding Unicode" to
                                                                   ensure consistent behavior between PS versions.
+EnsureProperUseOfDotNetMethods      Warning      Demo.ps1   11    Recommendation: The Split method behaves differently
+                                                                  between PS5 and PS7 due to .NET changes. Use -split or
+                                                                  -csplit with regex instead.
 ```
 
 # Using these rules in Visual Studio Code
