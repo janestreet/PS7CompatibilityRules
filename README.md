@@ -1,6 +1,9 @@
 A collection of [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) rules to highlight
 potential PowerShell 7 compatibility issues when migrating from PowerShell 5.1
 
+This module was featured in [Shell Renovations: Refactoring Your PowerShell Empire for V7](https://www.youtube.com/watch?v=riu5WywOrAI) talk at PSConfEU 2025
+
+
 # Usage
 ```powershell
 git clone https://github.com/janestreet/PS7CompatibilityRules.git
@@ -85,3 +88,4 @@ For more details, see
   - [Settings Support in ScriptAnalyzer](https://learn.microsoft.com/en-us/powershell/utility-modules/psscriptanalyzer/using-scriptanalyzer?view=ps-modules#settings-support-in-scriptanalyzer)
   - [Custom rules](https://learn.microsoft.com/en-us/powershell/utility-modules/psscriptanalyzer/using-scriptanalyzer?view=ps-modules#custom-rules)
   - [Using custom rules in Visual Studio Code](https://learn.microsoft.com/en-us/powershell/utility-modules/psscriptanalyzer/using-scriptanalyzer?view=ps-modules#using-custom-rules-in-visual-studio-code)
+
