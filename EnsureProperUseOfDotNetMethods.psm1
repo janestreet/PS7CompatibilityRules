@@ -27,14 +27,24 @@ function EnsureProperUseOfDotNetMethods {
     $methodsToValidate = @{
         'Split' = @{
             Criteria = {
-                # We flag Split method invocation when there is a single argument and the argument is a variable or
-                # a multi character string
+                # We flag Split method invocation when there is a single argument and the argument is one of these:
+                #  - a variable
+                #  - some method invocation, except ToCharArray()
+                #  - a multi character string
                 $_.Arguments.Count -eq 1 -and
-                ($_.Arguments[0] -is [VariableExpressionAst] -or
-                ($_.Arguments[0] -is [StringConstantExpressionAst] -and $_.Arguments[0].Value.Length -ne 1))
+                (
+                    $_.Arguments[0] -is [VariableExpressionAst] -or
+                    (
+                        $_.Arguments[0] -is [InvokeMemberExpressionAst] -and
+                        $_.Arguments[0].Member.ToString() -ne 'ToCharArray'
+                    ) -or
+                    ($_.Arguments[0] -is [StringConstantExpressionAst] -and $_.Arguments[0].Value.Length -ne 1)
+                )
             }
             Message = ('The Split method behaves differently between PS5 and PS7 due to .NET changes. ' +
-                       'Use -split or -csplit with regex instead.')
+                       'Use -split or -csplit for regex-based splitting, or pass a char array ' +
+                       '(for example, $delimiter.ToCharArray()) to preserve the old split-on-any-character ' +
+                       'behavior.')
         }
     }
 

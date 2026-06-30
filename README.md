@@ -40,6 +40,7 @@ $acl.SetAccessControl("C:\temp\example.txt")
 Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version | Format-Table -AutoSize
 
 'One,Two;Three Four'.Split(' ,;') | foreach { "Processing: $_" }
+'One,Two;Three Four'.Split($separator.ToLower()) | foreach { "Processing: $_" }
 ```
 
 Rules will report these findings:
@@ -61,7 +62,14 @@ CommandRecommendations              Information  Demo.ps1   2     Recommendation
                                                                   ensure consistent behavior between PS versions.
 EnsureProperUseOfDotNetMethods      Warning      Demo.ps1   11    Recommendation: The Split method behaves differently
                                                                   between PS5 and PS7 due to .NET changes. Use -split or
-                                                                  -csplit with regex instead.
+                                                                  -csplit for regex-based splitting, or pass a char array
+                                                                  (for example, $delimiter.ToCharArray()) to preserve the old
+                                                                  split-on-any-character behavior.
+EnsureProperUseOfDotNetMethods      Warning      Demo.ps1   12    Recommendation: The Split method behaves differently
+                                                                  between PS5 and PS7 due to .NET changes. Use -split or
+                                                                  -csplit for regex-based splitting, or pass a char array
+                                                                  (for example, $delimiter.ToCharArray()) to preserve the old
+                                                                  split-on-any-character behavior.
 ```
 
 # Using these rules in Visual Studio Code
