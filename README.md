@@ -41,6 +41,8 @@ Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version | Fo
 
 'One,Two;Three Four'.Split(' ,;') | foreach { "Processing: $_" }
 'One,Two;Three Four'.Split($separator.ToLower()) | foreach { "Processing: $_" }
+
+Get-Content -Path $File -Encoding:Byte
 ```
 
 Rules will report these findings:
@@ -50,6 +52,9 @@ Rules will report these findings:
 RuleName                            Severity     ScriptName Line  Message
 --------                            --------     ---------- ----  -------
 AvoidDeprecatedCommands             Error        Demo.ps1   9     The command Get-WmiObject or one of its parameters or
+                                                                  parameter values is not compatible with both PS5 and PS7.
+                                                                  Consider using a different command.
+AvoidDeprecatedCommands             Error        Demo.ps1   14    The command Get-Content or one of its parameters or
                                                                   parameter values is not compatible with both PS5 and PS7.
                                                                   Consider using a different command.
 AvoidDeprecatedTypes                Error        Demo.ps1   1     Violation: Use System.Net.Http.HttpClient &

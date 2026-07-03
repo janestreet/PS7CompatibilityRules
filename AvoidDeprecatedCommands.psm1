@@ -7,6 +7,12 @@ function AvoidDeprecatedCommands {
     .DESCRIPTION
         Find and flag commands that are listed on Microsoft's website as incompatible with PS7. The full list is in
         https://learn.microsoft.com/en-us/powershell/scripting/whats-new/differences-from-windows-powershell?view=powershell-7.4
+    .NOTES
+        Parameter-specific deny list entries are evaluated using [StaticParameterBinder]::BindCommand, which
+        binds parameters the same way PowerShell itself would. This robustly handles both '-Parameter Value'
+        and '-Parameter:Value' syntax instead of manually walking the command elements. Commands are not
+        resolved (BindCommand resolve = $false), so the rule works without the command being available in the
+        session.
     .INPUTS
         [ScriptBlockAst]
     .OUTPUTS
@@ -102,51 +108,66 @@ function AvoidDeprecatedCommands {
     }
 
     $commandDenyList += $commandDenyListPS7
+
     [scriptblock]$incompatibleCommandPredicate = {
         param (
+            # The AST node currently being evaluated by FindAll.
             [Ast]
             $Ast
         )
+        $isViolation = $false
         if ($Ast -is [CommandAst]) {
-            $isViolation = $false
-            $commandDenyList.Keys | where {$Ast.CommandElements[0] -like $_} | foreach {
-                $incompatibleCommand = $commandDenyList[$_]
-                # Is command always incompatible or just for selected paramters?
+            foreach ($deprecatedCommandName in $commandDenyList.Keys) {
+                # Stop as soon as we know the command is a violation.
+                if ($isViolation) {
+                    break
+                }
+                # Is the command on the deny list?
+                if ($Ast.CommandElements[0] -notlike $deprecatedCommandName) {
+                    continue
+                }
+                $incompatibleCommand = $commandDenyList[$deprecatedCommandName]
+                # Is the command always incompatible or just for selected parameters?
                 if ($incompatibleCommand.ContainsKey('*')) {
                     $isViolation = $true
+                    continue
                 }
-                else {
-                    # Loop through command params. Starting from 1 because the fitst element is the command itself
-                    for ($i = 1; $i -lt $Ast.CommandElements.Count -and -not $isViolation; $i++) {
-                        # Is command parameter on deny list?
-                        $incompatibleParameter = $incompatibleCommand.Keys |
-                            where {$Ast.CommandElements[$i].ParameterName -like $_} |
-                            foreach {$incompatibleCommand[$_]}
-                        # Is command parameter always incompatible or just for selected parameter values?
-                        if ($incompatibleParameter -eq '*') {
-                            $isViolation = $true
+                # Let PowerShell bind the parameters for us. resolve = $false binds parameters syntactically and
+                # does not require the command to be available in the session.
+                try {
+                    $bindingResult = [StaticParameterBinder]::BindCommand($Ast, $false)
+                }
+                catch {
+                    # If the command cannot be bound (e.g. duplicate parameters) we cannot evaluate its
+                    # parameters, so skip the parameter-level checks for this command.
+                    $bindingResult = $null
+                }
+                if ($null -eq $bindingResult) {
+                    continue
+                }
+                foreach ($boundParameter in $bindingResult.BoundParameters.GetEnumerator()) {
+                    foreach ($deprecatedParameterName in $incompatibleCommand.Keys) {
+                        # Is the bound parameter on the deny list?
+                        if ($boundParameter.Key -notlike $deprecatedParameterName) {
+                            continue
                         }
-                        else {
-                            # Is command parameter value on deny list?
-                            $isViolation = (
-                                $Ast.CommandElements[$i].Argument -and
-                                $Ast.CommandElements[$i].Argument -eq $incompatibleParameter
-                            ) -or (
-                                $Ast.CommandElements[$i + 1].Value -and
-                                $Ast.CommandElements[$i + 1].Value -eq $incompatibleParameter
-                            )
+                        # Is the parameter always incompatible ('*') or just for a selected value?
+                        $deprecatedValue = $incompatibleCommand[$deprecatedParameterName]
+                        $boundValue = $boundParameter.Value.ConstantValue
+                        if ($deprecatedValue -eq '*' -or $boundValue -eq $deprecatedValue) {
+                            $isViolation = $true
                         }
                     }
                 }
             }
-            $isViolation
         }
+        $isViolation
     }
 
     $violations = $ScriptBlockAst.FindAll($incompatibleCommandPredicate, $false)
     foreach ($violation in $violations) {
             [DiagnosticRecord] @{
-                Message           = ("The command $($Violation.CommandElements[0].Extent.Text) or one of its " +
+                Message           = ("The command $($violation.CommandElements[0].Extent.Text) or one of its " +
                                     'parameters or parameter values is not compatible with both PS5 and PS7. ' +
                                     'Consider using a different command.')
                 Extent            = $violation.Extent
