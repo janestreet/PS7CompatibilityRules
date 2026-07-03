@@ -60,8 +60,8 @@ AvoidDeprecatedCommands             Error        Demo.ps1   14    The command Ge
 AvoidDeprecatedTypes                Error        Demo.ps1   1     Violation: Use System.Net.Http.HttpClient &
                                                                   System.Net.Http.HttpClientHandler to ensure compatibility
                                                                   with PS7 and future versions
-AvoidGetSetAccessControl            Error        Demo.ps1   7     In PS7, GetAccessControl and SetAccessControl are not
-                                                                  available. Please use Get-Acl and Set-Acl
+AvoidGetSetAccessControl            Error        Demo.ps1   7     In PS7, the SetAccessControl method is not available.
+                                                                  Please use Get-Acl and Set-Acl
 CommandRecommendations              Information  Demo.ps1   2     Recommendation: Default encoding for "Out-File" has changed
                                                                   from unicode to UTF-8NoBOM. Specify "-Encoding Unicode" to
                                                                   ensure consistent behavior between PS versions.
