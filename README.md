@@ -21,7 +21,7 @@ Invoke-ScriptAnalyzer -Path '<your_code_path>' -Recurse -CustomRulePath .\PS7Com
 | AvoidDeprecatedTypes            | Flag references to deprecated types that are incompatible with PS7                                  |
 | AvoidGetSetAccessControl        | Flag GetAccessControl() or SetAccessControl() calls                                                 |
 | CommandRecommendations          | Recommendations for specific commands that have different behavior in PS7                           |
-| NoHtmlParsing                   | Flag code that relies on HTML parsing done in web cmdlets                                           |
+| NoHtmlParsing                   | Flag code that relies on HTML parsing in Invoke-WebRequest                                          |
 | SelectObjectMustSpecifyProperty | Select-Object ExcludeProperty is effective only when the command also includes a Property parameter |
 | EnsureProperUseOfDotNetMethods  | Flag some .NET method calls that have different behavior in PS7/.NET Core                           |
 
@@ -43,6 +43,9 @@ Get-WmiObject -Class Win32_OperatingSystem | Select-Object Caption, Version | Fo
 'One,Two;Three Four'.Split($separator.ToLower()) | foreach { "Processing: $_" }
 
 Get-Content -Path $File -Encoding:Byte
+
+$content = Invoke-WebRequest https://example.com/
+$content.ParsedHtml
 ```
 
 Rules will report these findings:
@@ -75,6 +78,14 @@ EnsureProperUseOfDotNetMethods      Warning      Demo.ps1   12    Recommendation
                                                                   -csplit for regex-based splitting, or pass a char array
                                                                   (for example, $delimiter.ToCharArray()) to preserve the old
                                                                   split-on-any-character behavior.
+NoHtmlParsing                       Error        Demo.ps1   16    Violation: To ensure compatibility with PowerShell 7,
+                                                                  always pass -UseBasicParsing to Invoke-WebRequest. This
+                                                                  also avoids an HTML parsing security prompt in patched
+                                                                  Windows PowerShell 5.1.
+NoHtmlParsing                       Error        Demo.ps1   17    Violation: This property depends on Invoke-WebRequest HTML
+                                                                  parsing and is not available in PowerShell 7. On patched
+                                                                  Windows PowerShell 5.1, HTML parsing requires an
+                                                                  interactive confirmation prompt.
 ```
 
 # Using these rules in Visual Studio Code
